@@ -1,0 +1,48 @@
+Имя файла: Caddyfile (точно так, без расширения .txt!)
+
+Содержимое:
+
+caddy
+ваш-домен.ru, www.ваш-домен.ru {
+    root * html
+    file_server
+
+    # Блокировка изменения файлов
+    @writeBlock {
+        path /*.xml /*.php /*.txt /*.json
+        method PUT POST DELETE PATCH
+    }
+    respond @writeBlock 403
+
+    # Блокировка просмотра системных папок
+    @gsProtect {
+        path /data/* /backups/* /plugins/* /themes/*
+    }
+    respond @gsProtect 404
+
+    php_fastcgi 127.0.0.1:9000
+
+    # Защита админки от интернета
+    @admin {
+        path /Admin/*
+        not remote_ip 127.0.0.1
+    }
+    respond @admin 403
+}
+
+# Локальный доступ к админке
+http://127.0.0.1:8080 {
+    bind 127.0.0.1
+    root * html
+    file_server
+    php_fastcgi 127.0.0.1:9000
+}
+
+# Adminer для работы с БД
+http://localhost:8080 {
+    bind 127.0.0.1
+    handle /adminer.php {
+        root php
+        php_fastcgi 127.0.0.1:9000
+    }
+}
